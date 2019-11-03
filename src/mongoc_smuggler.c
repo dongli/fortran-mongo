@@ -43,9 +43,21 @@ int mongoc_smuggler_connect(const char *uri_str, const char *db_name, const char
   bundle->database = mongoc_client_get_database(bundle->client, db_name);
   bundle->collection = mongoc_client_get_collection(bundle->client, db_name, col_name);
 
+  mongoc_uri_destroy(uri);
+
   return num_bundle++;
 }
 
+int mongoc_smuggler_insert(const int db_id) {
+
+  return FORTRAN_MONGO_NO_ERROR;
+}
+
 void mongoc_smuggler_final() {
+  for (int i = 0; i < num_bundle; i++) {
+    mongoc_collection_destroy(bundles[i].collection);
+    mongoc_database_destroy(bundles[i].database);
+    mongoc_client_destroy(bundles[i].client);
+  }
   mongoc_cleanup();
 }
