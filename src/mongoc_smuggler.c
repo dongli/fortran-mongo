@@ -48,8 +48,23 @@ int mongoc_smuggler_connect(const char *uri_str, const char *db_name, const char
   return num_bundle++;
 }
 
-int mongoc_smuggler_insert(const int db_id) {
+int mongoc_smuggler_insert_int(const int db_id, const char *key, int value) {
+  printf("%s: %d\n", key, value);
+  return FORTRAN_MONGO_NO_ERROR;
+}
 
+int mongoc_smuggler_insert_float(const int db_id, const char *key, float value) {
+  printf("%s: %f\n", key, value);
+  return FORTRAN_MONGO_NO_ERROR;
+}
+
+int mongoc_smuggler_insert_double(const int db_id, const char *key, double value) {
+  printf("%s: %f\n", key, value);
+  return FORTRAN_MONGO_NO_ERROR;
+}
+
+int mongoc_smuggler_insert_str(const int db_id, const char *key, const char *value) {
+  printf("%s: %s\n", key, value);
   return FORTRAN_MONGO_NO_ERROR;
 }
 

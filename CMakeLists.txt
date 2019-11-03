@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.6)
 project(fortran-mongo C Fortran)
 
 if (CMAKE_Fortran_COMPILER_ID STREQUAL "GNU")
-  set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -fno-underscoring")
+  set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -ffree-line-length-none")
 endif ()
 
 include(FindPkgConfig)
