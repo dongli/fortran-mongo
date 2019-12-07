@@ -4,12 +4,16 @@ program mongo_test
 
   implicit none
 
-  integer db_id, ierr, i
+  integer cid, ierr, i
   type(json_file) doc
 
   call mongo_init()
 
-  db_id = mongo_connect('mongodb://mu02:27117', 'test', 'things')
+  ierr = mongo_connect('mongodb://mu02:27117', 'test', 'things', cid)
+  if (ierr /= mongo_noerr) then
+    write(*, *) mongo_error(ierr)
+    stop 1
+  end if
 
   call doc%initialize()
   call doc%add('a', 1.0_json_rk)
@@ -17,9 +21,13 @@ program mongo_test
   call doc%add('c', 'foo')
 
   do i = 1, 10
-    ierr = mongo_insert(db_id, doc)
+    ierr = mongo_insert(cid, doc)
+    if (ierr /= mongo_noerr) then
+      write(*, *) 'Failed to insert!'
+      stop 1
+    end if
   end do
-  call mongo_dump_all(db_id)
+  call mongo_dump_all(cid)
 
   call mongo_final()
 

@@ -26,7 +26,6 @@ endif ()
 
 set(sources
   src/const.h
-  src/bson_smuggler.c
   src/mongoc_smuggler.c
   src/mongo_mod.F90
   src/mongo.F90
