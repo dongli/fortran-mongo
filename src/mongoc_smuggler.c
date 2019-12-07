@@ -1,4 +1,5 @@
 #include <mongoc.h>
+#include <bson.h>
 #include "const.h"
 
 struct MongoObjectBundle {
@@ -46,6 +47,38 @@ int mongoc_smuggler_connect(const char *uri_str, const char *db_name, const char
   mongoc_uri_destroy(uri);
 
   return num_bundle++;
+}
+
+int mongoc_smuggler_dump_all(const int *db_id) {
+  struct MongoObjectBundle *bundle;
+  mongoc_cursor_t *cursor;
+  const bson_t *doc;
+  bson_t *query;
+  char *str;
+
+  bundle = &bundles[*db_id];
+  if (!bundle) {
+    printf("bundle is wrong!\n");
+    exit(1);
+  }
+
+  query = bson_new();
+  if (!query) {
+    printf("query is wrong!\n");
+    exit(1);
+  }
+  cursor = mongoc_collection_find_with_opts(bundle->collection, query, NULL, NULL);
+  if (!cursor) {
+    printf("cursor is wrong!\n");
+    exit(1);
+  }
+  while (mongoc_cursor_next(cursor, &doc)) {
+    str = bson_as_canonical_extended_json(doc, NULL);
+    printf("%s\n", str);
+    bson_free(str);
+  }
+  bson_destroy(query);
+  mongoc_cursor_destroy(cursor);
 }
 
 int mongoc_smuggler_insert_int(const int db_id, const char *key, int value) {

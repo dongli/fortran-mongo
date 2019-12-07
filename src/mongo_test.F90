@@ -4,23 +4,12 @@ program mongo_test
 
   implicit none
 
-  integer db_id, ierr
-  type(hash_table_type) doc
-  type(hash_table_type) bar
+  integer db_id
 
   call mongo_init()
 
-  db_id = mongo_connect('mongodb://localhost:27017', 'test_db', 'test_col')
-
-  doc = hash_table(chunk_size=10)
-  call doc%insert('a', 1)
-  call doc%insert('b', 'foo')
-  call doc%insert('c', 1.5)
-  bar = hash_table(chunk_size=10)
-  call bar%insert('d', .true.)
-  call doc%insert('bar', bar)
-
-  ierr = mongo_insert(db_id, doc)
+  db_id = mongo_connect('mongodb://mu02:27117', 'test', 'things')
+  call mongo_dump_all(db_id)
 
   call mongo_final()
 
