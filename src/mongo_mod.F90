@@ -1,6 +1,7 @@
 module mongo_mod
 
   use iso_c_binding
+  use json_module
 
   implicit none
 
@@ -28,33 +29,11 @@ module mongo_mod
       integer(c_int) db_id
     end function mongoc_smuggler_dump_all
 
-    integer(c_int) function mongoc_smuggler_insert_int(db_id, key, val) result(ierr) bind(c, name='mongoc_smuggler_insert_int')
+    integer(c_int) function mongoc_smuggler_insert_json(db_id, json_str) result(ierr) bind(c, name='mongoc_smuggler_insert_json')
       use iso_c_binding
       integer(c_int) db_id
-      character(c_char) key(*)
-      integer(c_int) val
-    end function mongoc_smuggler_insert_int
-
-    integer(c_int) function mongoc_smuggler_insert_float(db_id, key, val) result(ierr) bind(c, name='mongoc_smuggler_insert_float')
-      use iso_c_binding
-      integer(c_int) db_id
-      character(c_char) key(*)
-      real(c_float) val
-    end function mongoc_smuggler_insert_float
-
-    integer(c_int) function mongoc_smuggler_insert_double(db_id, key, val) result(ierr) bind(c, name='mongoc_smuggler_insert_double')
-      use iso_c_binding
-      integer(c_int) db_id
-      character(c_char) key(*)
-      real(c_double) val
-    end function mongoc_smuggler_insert_double
-
-    integer(c_int) function mongoc_smuggler_insert_str(db_id, key, val) result(ierr) bind(c, name='mongoc_smuggler_insert_str')
-      use iso_c_binding
-      integer(c_int) db_id
-      character(c_char) key(*)
-      character(c_char) val(*)
-    end function mongoc_smuggler_insert_str
+      character(c_char) json_str(*)
+    end function mongoc_smuggler_insert_json
 
     subroutine mongoc_smuggler_final() bind(c, name='mongoc_smuggler_final')
     end subroutine mongoc_smuggler_final
@@ -88,9 +67,26 @@ contains
 
   end subroutine mongo_dump_all
 
-  recursive integer function mongo_insert(db_id) result(ierr)
+  integer function mongo_insert(db_id, doc) result(ierr)
 
     integer, intent(in) :: db_id
+    type(json_file), intent(inout) :: doc
+
+    character(kind=json_ck,len=:), allocatable :: str
+    character, allocatable :: tmp(:)
+    integer i
+
+    call doc%print_to_string(str)
+
+    allocate(tmp(len_trim(str)+1))
+    do i = 1, len_trim(str)
+      tmp(i:i) = str(i:i)
+    end do
+    tmp(i:i) = c_null_char
+
+    ierr = mongoc_smuggler_insert_json(db_id, tmp)
+
+    deallocate(tmp)
 
   end function mongo_insert
 

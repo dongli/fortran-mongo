@@ -24,13 +24,13 @@ int mongoc_smuggler_connect(const char *uri_str, const char *db_name, const char
   struct MongoObjectBundle *bundle;
 
   if (num_bundle == 100) {
-    return FORTRAN_MONGO_MEMORY_ERROR;
+    return MONGO_FORTRAN_MEMORY_ERROR;
   }
   bundle = &bundles[num_bundle];
 
   uri = mongoc_uri_new_with_error(uri_str, &error);
   if (!uri) {
-    return FORTRAN_MONGO_URI_ERROR;
+    return MONGO_FORTRAN_URI_ERROR;
   }
 
   /*
@@ -38,7 +38,7 @@ int mongoc_smuggler_connect(const char *uri_str, const char *db_name, const char
    */
   bundle->client = mongoc_client_new_from_uri(uri);
   if (!bundle->client) {
-    return FORTRAN_MONGO_INTERNAL_ERROR;
+    return MONGO_FORTRAN_INTERNAL_ERROR;
   }
 
   bundle->database = mongoc_client_get_database(bundle->client, db_name);
@@ -81,24 +81,38 @@ int mongoc_smuggler_dump_all(const int *db_id) {
   mongoc_cursor_destroy(cursor);
 }
 
-int mongoc_smuggler_insert_int(const int db_id, const char *key, int value) {
-  printf("%s: %d\n", key, value);
-  return FORTRAN_MONGO_NO_ERROR;
-}
+int mongoc_smuggler_insert_json(const int *db_id, const uint8_t *json_str) {
+  struct MongoObjectBundle *bundle;
 
-int mongoc_smuggler_insert_float(const int db_id, const char *key, float value) {
-  printf("%s: %f\n", key, value);
-  return FORTRAN_MONGO_NO_ERROR;
-}
+  bundle = &bundles[*db_id];
+  if (!bundle) {
+    printf("bundle is wrong!\n");
+    exit(1);
+  }
 
-int mongoc_smuggler_insert_double(const int db_id, const char *key, double value) {
-  printf("%s: %f\n", key, value);
-  return FORTRAN_MONGO_NO_ERROR;
-}
+  bson_t *bson;
+  bson_error_t error;
+  bson = bson_new_from_json(json_str, -1, &error);
+  if (!bson) {
+    printf("Failed to convert JSON to BSON!\n");
+    exit(1);
+  }
 
-int mongoc_smuggler_insert_str(const int db_id, const char *key, const char *value) {
-  printf("%s: %s\n", key, value);
-  return FORTRAN_MONGO_NO_ERROR;
+  mongoc_bulk_operation_t *bulk;
+
+  bulk = mongoc_collection_create_bulk_operation_with_opts(bundle->collection, NULL);
+
+  mongoc_bulk_operation_insert(bulk, bson);
+
+  if (!mongoc_bulk_operation_execute(bulk, NULL, &error)) {
+    printf("Failed to insert BSON! %s\n", error.message);
+    exit(1);
+  }
+
+  bson_destroy(bson);
+  mongoc_bulk_operation_destroy(bulk);
+
+  return MONGO_FORTRAN_NO_ERROR;
 }
 
 void mongoc_smuggler_final() {
